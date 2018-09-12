@@ -5,9 +5,8 @@ highlight_color: '#3498db'
 
 # Profile links on the left sidebar, leave blank to ignore
 social:
-  github: swanson
-  #bitbucket: philipj
-  hacker_news: swanson
+  github: unl1nk
+  #bitbucket: philip
   #stackexchange: 348619
   #stackoverflow: 348619
   twitter: _swanson
@@ -18,9 +17,9 @@ social:
   #gravatar: 86e6ff8f75f9daef42d53b7f8002fd95
   #flickr: johndoe
 
-# "Hi, I'm _______"
-name: Matt Swanson
-email: test@example.com
+# "Hi, I'm unl1nk"
+name: unl1nk
+email: reppu@protonmail.ch
 tagline: "weak opinions, strongly held"
 
 # Google Analytics key, leave blank to ignore
