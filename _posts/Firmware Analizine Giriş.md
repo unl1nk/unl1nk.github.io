@@ -1,3 +1,11 @@
+---
+layout: post
+title: IoT Firmware Analizine Giriş
+categories: nope
+- blog
+---
+
+
 # IoT Firmware Analizi 101
 
 Selamlar herkese. Bu blogu açıp yazmaya başlamak isteme sebebim karınca kadar bildiğimi siz okuyan arkadaşlara aktarmaktı. Uzun süredir güvenlik - hacking camiasını takip ediyorum. Sektöre girmek için de yeterli bilgiye sahip olduğumu bu blog yazıları ile aktarmak istiyorum. Bu yazıda başlıktan anlaşılabileceği üzere, elimizde olan bir firmware'ın analizinden bahsediyor olacağım.
