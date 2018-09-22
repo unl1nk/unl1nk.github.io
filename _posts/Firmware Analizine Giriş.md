@@ -1,0 +1,93 @@
+# IoT Firmware Analizi 101
+
+Selamlar herkese. Bu blogu açıp yazmaya başlamak isteme sebebim karınca kadar bildiğimi siz okuyan arkadaşlara aktarmaktı. Uzun süredir güvenlik - hacking camiasını takip ediyorum. Sektöre girmek için de yeterli bilgiye sahip olduğumu bu blog yazıları ile aktarmak istiyorum. Bu yazıda başlıktan anlaşılabileceği üzere, elimizde olan bir firmware'ın analizinden bahsediyor olacağım.
+
+Bunun bir yazı dizisi olmasını çok istiyorum. O yüzden bu yazıda yalnızca, firmware'ı aldıktan sonra içerisinden dosya sistemini çıkartmayı ve root parolasını elde etmeyi göstereceğim. Diğer bir yazıda ise, bir backdoor'u tespit etmeyi anlatan kısa yazı yazacağım.
+
+
+## IoT
+
+**IoT** nedir v.s gibi sizi sıkacak bir konu ile başlamak istemiyorum. IoT ne ola ki diyen arkadaşlar [buraya](https://www.python.tc/iot-nedir/) tıklayarak okuyabilirler.
+
+**Firmware** nedir gibi bi soruyu öncelikle yanıtlayalım. Firmware, donanım için yazılmış bir yazılımdır. Cihazda, programların çalışmasını sağlar.
+
+**IoT** cihazlara pentest süreçleri uygulanırken artık firmware analizi de yapılmakta. Bu sayede birçok zafiyet bulunmakta. Firmware analizi ile, cihazın dosya sistemine de ulaşabildiği için hackerlar ve güvenlik araştırmacıları bu yöntemi çok sevmekte.
+
+
+## Firmware'ı Elde Etmek
+
+Firmware dosyasını elde etmek için bir çok yöntem mevcuttur. Bunlardan en bilinenleri :
+
+* Üreticinin websitesinden dosyayı indirmek,
+* Bir mobil uygulaması varsa onun trafiğini takip ederek elde etmek,
+* Yine mobil uygulamayı decompile ederek oradan dosyanın URL'ini elde etmek,
+* Cihaza fiziksel erişim mevcutsa UART portları üzerinden işlemler ile elde etmektir.
+
+Yukarıdaki yöntemlerden birisi ile firmware dosyasını elde ettikten sonra, ihtiyacımız olan şeyleri indirip kurduktan sonra analize hazır hale gelmiş olacağız.
+
+### Araç - Gereç
+
+Şimdi ihtiyacımız olan araçlar aşağıda, bunları ben Ubuntu 18.04 üzerinde kullanıyorum. Siz istediğiniz başka bir dağıtımda kullanabilirsiniz ancak ben Ubuntuyu tavsiye ederim.
+
+* Binwalk
+* Bu güzide aracımız web güvenliğinde Burp Suite neyse burada da bizim için o. Kısaca kendisi bir magic byte parser ve extractor'ı.
+
+* Strings
+* Bu aracımız ise hepimizin bildiği üzere Linux sistemlerde yüklü olarak gelmekte. Yaptığı iş ise hedef dosya üzerinde okunabilir stringleri bize göstermektedir.
+
+
+## Analize Başlıyoruz !
+
+İşimize firmware dosyamızın şöyle bi içeriğine bakarak başlıyoruz. Aşağıdaki binwalk komutunu vererek, firmware dosyamızın içeriğini görüntülüyoruz.
+
+```
+binwalk firmware.bin
+```
+
+![alt text](./binwalk_firmware.png "binwalk firmware.bin")
+
+
+Evet, binwalk ile incelediğimizde ```squashfs``` dosya sistemi olduğunu görüyoruz.
+
+#### Squashfs Dosya Sistemi
+
+Squashfs, Linux için mevcut olan read-only bir dosya sistemidir.
+
+LZMA ise, ```Lempel–Ziv–Markov chain algorithm``` algoritmasının kısaltılmış halidir. Kendisi, kayıpsız bir sıkıştırma algoritması olarak bilinir.
+
+### Squashfs Dosya Sistemini Çıkarmak
+
+#### Binwalk İle Suashfs Dosya Sistemini Elde Etmek
+
+Şimdi, yapmamız gereken şey dosya sistemini firmware dosyası içerisinden çıkarıp analiz etmek. Bunun için ```binwalk -Me firmware.bin``` komutunu kullanabiliriz. Burada ```-e``` komutu extract komutunu söylemekte. Buradaki ```-M``` komutu ise, recursive olarak çıkarılan dosyaları tarar. M harfi rus matroshka bebeğinden gelmekte.
+
+![alt text](./binwalk_matryoshka.png "binwalk -M")
+![alt text](./binwalk_extract.png "binwalk -e")
+
+Yukarıdaki 2 ekran görüntüsü bu iki komuta referans amaçlı konulmuştur.
+
+Şimdi, komutumuzu çalıştıralım. ```binwalk -eM firmware.bin```
+
+![alt text](./binwalk_em.png "binwalk -eM firmware.bin")
+
+### Squashfs Dosya Sistemini Analiz Etmek
+
+Binwalk ile firmware dosyasından squashfs dosya sistemini çıkardıktan sonra, dosya sisteminin içine girip dolanmaya başlıyoruz. Ben genellikle ilk olarak dosya sisteminden, passwd ve shadow dosyalarını alıp root parolasını çıkartmaya çalışıyorum.
+
+Bunun için, çıkardığımız dosya sisteminde passwd ve shadow dosyalarını buluyoruz.
+
+![alt text](./binwalk_passwd.png "john passwd")
+
+Bu passwd ve shadow dosyalarını başka dosyalara yazarak john ile parolayı elde etmeye çalışalım. Squashfs dosya sisteminin /etc/ dizinine gelip, ```unshadow passwd shadow > test.txt``` diyelim. Ardından, ```john --show test.txt``` diyerek parolayı elde edelim.
+
+![alt text](./binwalk_unshadow.png "john unshadow")
+
+Evet, bu şekilde elde etmeye çalışabiliriz.
+
+Yine /etc dizini altında, banner ve version gibi dosyaları okuyup bilgiler elde edebiliriz.
+
+![alt text](./binwalk_version.png "version_openwrt")
+
+
+
+Bu yazı bu kadar, basit ve anlaşılır olmasına özen gösterdim. Eğer bir şeyler sormak, hatamı düzeltmek, birlikte yazmak isteyen olursa bana [buradan](mailto:reppu@protonmail.ch) ulaşabilirler.
